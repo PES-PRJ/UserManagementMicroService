@@ -16,12 +16,11 @@ public class PostgresConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(PostgresConfig.class);
 
-    // 🔹 External PostgreSQL credentials
-    private static final String DB_URL = "jdbc:postgresql://dpg-d6u2do9j16oc73fma5r0-a.singapore-postgres.render.com:5432/ams_db_qrv5";
-    private static final String DB_USERNAME = "ams_admin";
-    private static final String DB_PASSWORD = "swsKsQXsPpmXPRUzwIT7fffBCqbLUqVN";
+    private static final String DB_URL = "jdbc:postgresql://dpg-d7frvnq8qa3s73do8en0-a.singapore-postgres.render.com:5432/ams_14tr";
 
-    // Optional SSL: Render requires SSL
+    private static final String DB_USERNAME = "ams_14tr_user";
+    private static final String DB_PASSWORD = "ZzY2glNbkiZnTeNNNInx41jC3lliZhKl";
+
     private static final String DB_SSL_PARAMS = "?sslmode=require";
 
     @Bean

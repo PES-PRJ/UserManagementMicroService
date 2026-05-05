@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 public interface UserRepository extends JpaRepository<User, Long> {
     // Critical for Login: finds the user by their unique email
     User findByEmail(String email);
+    User findByRegistrationToken(String registrationToken);
 }
