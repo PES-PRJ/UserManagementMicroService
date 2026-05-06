@@ -43,21 +43,21 @@ public class PostgresConfig {
         HikariDataSource dataSource = new HikariDataSource(config);
 
         // 🔹 Test the connection with error handling
-        try (Connection conn = dataSource.getConnection()) {
-            if (conn.isValid(5)) {
-                logger.info("Successfully connected to PostgreSQL at Render!");
-            } else {
-                logger.error("Connection obtained but not valid!");
-            }
-        } catch (SQLException e) {
-            if (e.getMessage().contains("SSL")) {
-                logger.error("SSL handshake failed. Check your connection settings and SSL mode.", e);
-            } else {
-                logger.error("Failed to connect to PostgreSQL", e);
-            }
-            // Optionally: exit app if DB connection is critical
-            // System.exit(1);
-        }
+        // try (Connection conn = dataSource.getConnection()) {
+        //     if (conn.isValid(5)) {
+        //         logger.info("Successfully connected to PostgreSQL at Render!");
+        //     } else {
+        //         logger.error("Connection obtained but not valid!");
+        //     }
+        // } catch (SQLException e) {
+        //     if (e.getMessage().contains("SSL")) {
+        //         logger.error("SSL handshake failed. Check your connection settings and SSL mode.", e);
+        //     } else {
+        //         logger.error("Failed to connect to PostgreSQL", e);
+        //     }
+        //     // Optionally: exit app if DB connection is critical
+        //     // System.exit(1);
+        // }
 
         return dataSource;
     }
