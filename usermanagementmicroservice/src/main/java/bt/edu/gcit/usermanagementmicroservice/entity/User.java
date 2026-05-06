@@ -12,22 +12,25 @@ public class User {
     private Long id;
 
     private String name;
+
+    @Column(unique = true)
     private String email;
-    private String role;
+
     private String password;
+
+    // ✅ FIXED: Role relationship
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    private Role role;
+
     private String registrationToken;
     private LocalDateTime tokenExpiry;
 
-    public User() {
-    }
+    public User() {}
 
     // Getters and Setters
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -38,6 +41,10 @@ public class User {
         this.name = name;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getEmail() {
         return email;
     }
@@ -46,11 +53,11 @@ public class User {
         this.email = email;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 

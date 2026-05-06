@@ -13,31 +13,42 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class DataSeeder {
 
     @Bean
-    CommandLineRunner initDatabase(UserRepository userRepo, RoleRepository roleRepo, BCryptPasswordEncoder encoder) {
+    CommandLineRunner initDatabase(UserRepository userRepo,
+                                   RoleRepository roleRepo,
+                                   BCryptPasswordEncoder encoder) {
         return args -> {
-            // 1. Ensure Roles exist
-            if (roleRepo.findByName("ADMIN") == null) {
-                roleRepo.save(new Role("ADMIN"));
+
+            // 1. Seed roles
+            String[] roles = {"ADMIN", "EMPLOYEE", "ASSETMANAGER"};
+
+            for (String roleName : roles) {
+                if (roleRepo.findByName(roleName) == null) {
+                    roleRepo.save(new Role(roleName));
+                    System.out.println(">>> SEEDER: Role created: " + roleName);
+                }
             }
 
-            // 2. Look for the specific admin email
+            // 2. Get ADMIN role
+            Role adminRole = roleRepo.findByName("ADMIN");
+
+            // 3. Seed admin user
             User existingAdmin = userRepo.findByEmail("admin@gcit.edu.bt");
 
             if (existingAdmin == null) {
                 User admin = new User();
                 admin.setName("System Administrator");
                 admin.setEmail("admin@gcit.edu.bt");
-                admin.setRole("ADMIN");
-                // Encoding is CRITICAL for AuthenticationManager to work
                 admin.setPassword(encoder.encode("admin123"));
+                admin.setRole(adminRole);
 
                 userRepo.save(admin);
-                System.out.println(">>> SEEDER: Admin account created: admin@gcit.edu.bt / admin123");
+                System.out.println(">>> SEEDER: Admin account created");
             } else {
-                // Optional: Force update password to BCrypt if you've been getting 403s
                 existingAdmin.setPassword(encoder.encode("admin123"));
+                existingAdmin.setRole(adminRole);
+
                 userRepo.save(existingAdmin);
-                System.out.println(">>> SEEDER: Admin password updated to BCrypt.");
+                System.out.println(">>> SEEDER: Admin updated");
             }
         };
     }

@@ -43,7 +43,7 @@ public class AuthController {
         User user = userRepository.findByEmail(email);
         
         // 3. Generate the token
-        String token = jwtUtils.generateToken(user.getEmail(), user.getRole());
+        String token = jwtUtils.generateToken(user.getEmail(), user.getRole().getName());
 
         // 4. Return as JSON
         return Map.of("token", token);
