@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -30,12 +31,12 @@ public class UserServiceImpl implements UserService {
         if (existingRole == null) {
             throw new RuntimeException("Role not found");
         }
-        user.setRole(existingRole); 
+        user.setRole(existingRole);
 
         // 2. Generate invitation token logic
         String token = UUID.randomUUID().toString();
         user.setRegistrationToken(token);
-        
+
         // 3. Set expiry for exactly 10 minutes from now
         user.setTokenExpiry(LocalDateTime.now().plusMinutes(10));
 
@@ -45,34 +46,35 @@ public class UserServiceImpl implements UserService {
         // 5. Explicitly trigger the email service
         emailService.sendInvitationEmail(savedUser.getEmail(), token);
 
-        return savedUser; 
+        return savedUser;
     }
 
     @Override
     public List<User> findAll() {
-        return userRepository.findAll();
+        // Fetch all users and filter out the ADMIN role
+        return userRepository.findAll().stream()
+                .filter(user -> user.getRole() != null &&
+                        !user.getRole().getName().equalsIgnoreCase("ADMIN"))
+                .collect(Collectors.toList());
     }
 
     @Override
     public User update(Long id, User userDetails) {
-        // 1. Find existing user
-        User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        User existing = userRepository.findById(id).orElse(null);
+        if (existing != null) {
+            existing.setName(userDetails.getName());
+            existing.setEmail(userDetails.getEmail());
 
-        // 2. Update only allowed fields (Name and Email)
-        existingUser.setName(userDetails.getName());
-        existingUser.setEmail(userDetails.getEmail());
-
-        // 3. Update Role if provided in request
-        if (userDetails.getRole() != null && userDetails.getRole().getName() != null) {
-            Role updatedRole = roleRepository.findByName(userDetails.getRole().getName());
-            if (updatedRole != null) {
-                existingUser.setRole(updatedRole);
+            // Fetch the seeded role from the DB to ensure Hibernate links it correctly
+            if (userDetails.getRole() != null && userDetails.getRole().getName() != null) {
+                Role managedRole = roleRepository.findByName(userDetails.getRole().getName());
+                if (managedRole != null) {
+                    existing.setRole(managedRole);
+                }
             }
+            return userRepository.save(existing);
         }
-
-        // Save and return
-        return userRepository.save(existingUser);
+        return null;
     }
 
     @Override
