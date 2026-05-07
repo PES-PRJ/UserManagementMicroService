@@ -3,6 +3,7 @@ package bt.edu.gcit.usermanagementmicroservice.service;
 import bt.edu.gcit.usermanagementmicroservice.dao.RoleRepository;
 import bt.edu.gcit.usermanagementmicroservice.dao.UserRepository;
 import bt.edu.gcit.usermanagementmicroservice.entity.User;
+import bt.edu.gcit.usermanagementmicroservice.utils.EmailService;
 import bt.edu.gcit.usermanagementmicroservice.entity.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,31 +24,28 @@ public class UserServiceImpl implements UserService {
     private EmailService emailService;
 
     @Override
-    // public User save(User user) {
-    // // Generate a 24-hour token
-    // String token = UUID.randomUUID().toString();
-    // user.setRegistrationToken(token);
-    // user.setTokenExpiry(LocalDateTime.now().plusHours(24));
-
-    // User savedUser = userRepository.save(user);
-    // emailService.sendInvitationEmail(savedUser.getEmail(), token);
-    // return savedUser;
-    // }
-
     public User save(User user) {
-        // Fetch the managed role from the DB first[cite: 3, 8]
+        // 1. Fetch the managed role from the DB first to avoid detached entity issues
         Role existingRole = roleRepository.findByName(user.getRole().getName());
         if (existingRole == null) {
             throw new RuntimeException("Role not found");
         }
-        user.setRole(existingRole); // Link the user to the existing DB role[cite: 4]
+        user.setRole(existingRole); 
 
-        // Generate token logic[cite: 9]
+        // 2. Generate invitation token logic
         String token = UUID.randomUUID().toString();
         user.setRegistrationToken(token);
-        user.setTokenExpiry(LocalDateTime.now().plusHours(24));
+        
+        // 3. Set expiry for exactly 10 minutes from now
+        user.setTokenExpiry(LocalDateTime.now().plusMinutes(10));
 
-        return userRepository.save(user); // [cite: 2, 9]
+        // 4. Save user initially without a password
+        User savedUser = userRepository.save(user);
+
+        // 5. Explicitly trigger the email service
+        emailService.sendInvitationEmail(savedUser.getEmail(), token);
+
+        return savedUser; 
     }
 
     @Override
@@ -56,18 +54,32 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User update(Long id, User user) {
-        User existing = userRepository.findById(id).orElse(null);
-        if (existing != null) {
-            existing.setName(user.getName());
-            existing.setRole(user.getRole());
-            return userRepository.save(existing);
+    public User update(Long id, User userDetails) {
+        // 1. Find existing user
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        // 2. Update only allowed fields (Name and Email)
+        existingUser.setName(userDetails.getName());
+        existingUser.setEmail(userDetails.getEmail());
+
+        // 3. Update Role if provided in request
+        if (userDetails.getRole() != null && userDetails.getRole().getName() != null) {
+            Role updatedRole = roleRepository.findByName(userDetails.getRole().getName());
+            if (updatedRole != null) {
+                existingUser.setRole(updatedRole);
+            }
         }
-        return null;
+
+        // Save and return
+        return userRepository.save(existingUser);
     }
 
     @Override
     public void deleteById(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("User not found with id: " + id);
+        }
         userRepository.deleteById(id);
     }
 }
